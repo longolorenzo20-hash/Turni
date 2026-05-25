@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TURNI+ | Croce Rossa Italiana</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --red: #C8102E;
+    --red-dark: #9E0020;
+    --red-light: #f5e6e9;
+    --ink: #1a1a2e;
+    --slate: #3d3d5c;
+    --mist: #f4f4f8;
+    --white: #ffffff;
+    --border: #e2e2ea;
+    --green: #1a9e5f;
+    --amber: #e07b00;
+    --shadow-sm: 0 1px 4px rgba(26,26,46,.08);
+    --shadow-md: 0 4px 20px rgba(26,26,46,.12);
+    --shadow-lg: 0 12px 40px rgba(26,26,46,.16);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--mist);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── SCREEN ROUTER ── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ── LOGIN ── */
+  #screen-login {
+    background: linear-gradient(145deg, #1a1a2e 0%, #2d1a2e 50%, #1a1a2e 100%);
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  #screen-login::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(200,16,46,.25) 0%, transparent 70%);
+    top: -200px; right: -200px;
+    pointer-events: none;
+  }
+  #screen-login::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(200,16,46,.12) 0%, transparent 70%);
+    bottom: -100px; left: -100px;
+    pointer-events: none;
+  }
+  .login-card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.1);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp .5s ease both;
+  }
+  .login-logo {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 36px;
+  }
+  .login-logo .cross {
+    width: 48px; height: 48px;
+    background: var(--red);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; color: white;
+    box-shadow: 0 4px 20px rgba(200,16,46,.5);
+    flex-shrink: 0;
+  }
+  .login-logo h1 { font-size: 26px; font-weight: 700; color: white; letter-spacing: -.5px; }
+  .login-logo p { font-size: 12px; color: rgba(255,255,255,.5); font-family: 'DM Mono'; }
+  .login-label { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.5); margin-bottom: 6px; }
+  .login-input {
+    width: 100%; padding: 12px 16px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: var(--radius-sm);
+    color: white; font-size: 15px; font-family: 'DM Sans';
+    margin-bottom: 18px;
+    transition: border-color .2s;
+    outline: none;
+  }
+  .login-input:focus { border-color: var(--red); }
+  .login-input::placeholder { color: rgba(255,255,255,.25); }
+  .role-pills { display: flex; gap: 8px; margin-bottom: 28px; }
+  .role-pill {
+    flex: 1; padding: 8px 0; text-align: center;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: rgba(255,255,255,.5);
+    transition: all .2s;
+  }
+  .role-pill.active { background: var(--red); border-color: var(--red); color: white; }
+  .btn-login {
+    width: 100%; padding: 14px;
+    background: var(--red);
+    border: none; border-radius: var(--radius-sm);
+    color: white; font-size: 15px; font-weight: 600; font-family: 'DM Sans';
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(200,16,46,.4);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn-login:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(200,16,46,.5); }
+  .btn-login:active { transform: translateY(0); }
+
+  /* ── SHELL (logged-in wrapper) ── */
+  .app-shell { display: flex; min-height: 100vh; flex-direction: column; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    height: 60px;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 24px;
+    gap: 16px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: var(--shadow-sm);
+  }
+  .topbar-logo {
+    display: flex; align-items: center; gap: 10px; margin-right: auto;
+    text-decoration: none;
+  }
+  .topbar-cross {
+    width: 32px; height: 32px;
+    background: var(--red);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; color: white;
+  }
+  .topbar-brand { font-weight: 700; font-size: 17px; color: var(--ink); letter-spacing: -.3px; }
+  .topbar-section { font-size: 13px; color: var(--slate); margin-left: 4px; opacity: .6; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+  .notif-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--mist);
+    border: 1px solid var(--border);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 17px; position: relative;
+    transition: background .15s;
+  }
+  .notif-btn:hover { background: var(--red-light); }
+  .notif-dot {
+    width: 8px; height: 8px;
+    background: var(--red);
+    border-radius: 50%;
+    position: absolute; top: 6px; right: 6px;
+    border: 2px solid white;
+  }
+  .user-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 4px;
+    background: var(--mist);
+    border: 1px solid var(--border);
+    border-radius: 99px; cursor: pointer;
+    transition: background .15s;
+  }
+  .user-chip:hover { background: var(--red-light); }
+  .user-avatar {
+    width: 28px; height: 28px;
+    background: var(--red);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: white;
+  }
+  .user-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .user-role { font-size: 11px; color: var(--slate); opacity: .7; }
+
+  /* ── LAYOUT ── */
+  .app-body { display: flex; flex: 1; }
+
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    padding: 20px 12px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .sidebar-section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--slate);
+    opacity: .5; padding: 12px 8px 4px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: var(--radius-sm);
+    cursor: pointer; font-size: 14px; font-weight: 500;
+    color: var(--slate);
+    transition: all .15s;
+  }
+  .nav-item:hover { background: var(--mist); color: var(--ink); }
+  .nav-item.active { background: var(--red-light); color: var(--red); font-weight: 600; }
+  .nav-icon { font-size: 17px; width: 22px; text-align: center; }
+  .nav-badge {
+    margin-left: auto; background: var(--red);
+    color: white; font-size: 10px; font-weight: 700;
+    padding: 1px 6px; border-radius: 99px;
+  }
+  .logout-btn {
+    margin-top: auto; display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: var(--radius-sm);
+    cursor: pointer; font-size: 14px; font-weight: 500;
+    color: var(--slate); opacity: .6;
+    transition: all .15s;
+    background: none; border: none; width: 100%; text-align: left; font-family: 'DM Sans';
+  }
+  .logout-btn:hover { opacity: 1; background: var(--mist); }
+
+  /* ── MAIN CONTENT ── */
+  .main { flex: 1; padding: 28px 32px; overflow-y: auto; }
+  .page { display: none; }
+  .page.active { display: block; animation: fadeUp .3s ease; }
+  .page-header { margin-bottom: 28px; }
+  .page-title { font-size: 24px; font-weight: 700; letter-spacing: -.5px; color: var(--ink); }
+  .page-subtitle { font-size: 14px; color: var(--slate); opacity: .7; margin-top: 2px; }
+
+  /* ── STAT CARDS ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .stat-icon { font-size: 22px; margin-bottom: 10px; }
+  .stat-value { font-size: 28px; font-weight: 700; letter-spacing: -1px; color: var(--ink); }
+  .stat-label { font-size: 12px; color: var(--slate); opacity: .7; margin-top: 2px; }
+  .stat-card.accent { background: var(--red); border-color: var(--red); }
+  .stat-card.accent .stat-value, .stat-card.accent .stat-label { color: white; opacity: 1; }
+
+  /* ── CARDS / TABLES ── */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .card-body { padding: 22px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--mist);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px; font-weight: 700; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--slate);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--mist); }
+  tbody td { padding: 12px 14px; font-size: 14px; vertical-align: middle; }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-block; padding: 3px 9px;
+    border-radius: 99px; font-size: 11px; font-weight: 600;
+  }
+  .badge-green { background: #e6f7ee; color: var(--green); }
+  .badge-amber { background: #fff4e0; color: var(--amber); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-slate { background: #ededf4; color: var(--slate); }
+
+  /* ── CALENDAR ── */
+  .calendar-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .cal-nav {
+    display: flex; gap: 8px;
+  }
+  .cal-btn {
+    padding: 6px 12px;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer; font-size: 14px;
+    transition: background .15s;
+  }
+  .cal-btn:hover { background: var(--mist); }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7,1fr);
+    gap: 1px;
+    background: var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .cal-day-header {
+    background: var(--mist);
+    text-align: center; padding: 8px 4px;
+    font-size: 11px; font-weight: 700; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--slate);
+  }
+  .cal-day {
+    background: var(--white);
+    min-height: 90px; padding: 8px;
+    cursor: pointer; transition: background .15s;
+  }
+  .cal-day:hover { background: #fafafa; }
+  .cal-day.other-month { opacity: .4; }
+  .cal-day.today { background: #fff8f9; }
+  .cal-date { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+  .cal-day.today .cal-date { color: var(--red); }
+  .cal-shift {
+    font-size: 10px; font-weight: 600;
+    padding: 2px 5px; border-radius: 3px;
+    margin-bottom: 2px; display: block;
+  }
+  .cal-shift.mattina { background: #e6f7ee; color: var(--green); }
+  .cal-shift.pomeriggio { background: #fff4e0; color: var(--amber); }
+  .cal-shift.notte { background: #eeedf8; color: #5c58b0; }
+  .cal-shift.free { background: var(--red-light); color: var(--red); }
+
+  /* ── TURNI TABLE ── */
+  .shifts-filters { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 7px 14px;
+    border-radius: 99px;
+    background: var(--white); border: 1px solid var(--border);
+    font-size: 13px; font-weight: 500; cursor: pointer; color: var(--slate);
+    transition: all .15s;
+  }
+  .filter-btn:hover, .filter-btn.active { background: var(--red); border-color: var(--red); color: white; }
+  .btn-prenotati {
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--green);
+    border: none; color: white; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: opacity .15s; font-family: 'DM Sans';
+  }
+  .btn-prenotati:hover { opacity: .85; }
+  .btn-prenotati:disabled { background: #ccc; cursor: not-allowed; }
+  .btn-prenotati.booked { background: var(--slate); }
+
+  /* ── FORM ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 4px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--slate); text-transform: uppercase; letter-spacing: .06em; }
+  .form-control {
+    padding: 9px 13px;
+    background: var(--mist); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 14px; font-family: 'DM Sans';
+    color: var(--ink); outline: none;
+    transition: border-color .2s;
+  }
+  .form-control:focus { border-color: var(--red); background: white; }
+  .btn-primary {
+    padding: 10px 22px;
+    background: var(--red); border: none; border-radius: var(--radius-sm);
+    color: white; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans'; transition: opacity .15s;
+  }
+  .btn-primary:hover { opacity: .88; }
+  .btn-secondary {
+    padding: 10px 22px;
+    background: var(--mist); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--slate); font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans'; transition: background .15s;
+  }
+  .btn-secondary:hover { background: var(--border); }
+  .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+  /* ── NOTIFICATION PANEL ── */
+  .notif-item {
+    display: flex; gap: 14px; padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-icon-wrap {
+    width: 38px; height: 38px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .notif-icon-wrap.warn { background: #fff4e0; }
+  .notif-icon-wrap.ok { background: #e6f7ee; }
+  .notif-icon-wrap.alert { background: var(--red-light); }
+  .notif-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .notif-body { font-size: 13px; color: var(--slate); }
+  .notif-time { font-size: 11px; color: var(--slate); opacity: .6; font-family: 'DM Mono'; margin-top: 2px; }
+
+  /* ── PROGRESS RING ── */
+  .coverage-ring { display: flex; align-items: center; gap: 20px; }
+  .ring-wrap { position: relative; width: 80px; height: 80px; }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .ring-pct { font-size: 17px; font-weight: 700; color: var(--ink); }
+  .ring-sub { font-size: 9px; color: var(--slate); opacity: .6; text-transform: uppercase; }
+  .coverage-list { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .cov-row { display: flex; align-items: center; gap: 10px; }
+  .cov-bar-wrap { flex: 1; height: 6px; background: var(--mist); border-radius: 99px; overflow: hidden; }
+  .cov-bar { height: 100%; border-radius: 99px; }
+  .cov-label { font-size: 12px; font-weight: 600; color: var(--slate); width: 70px; }
+  .cov-val { font-size: 12px; font-family: 'DM Mono'; color: var(--slate); width: 28px; text-align: right; }
+
+  /* ── ALERTS ── */
+  .alert-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; border-radius: var(--radius-sm);
+    margin-bottom: 12px;
+  }
+  .alert-bar.warn { background: #fff4e0; border: 1px solid #f5d89a; }
+  .alert-bar.danger { background: var(--red-light); border: 1px solid #f5b8bf; }
+  .alert-bar .icon { font-size: 17px; }
+  .alert-bar .text { font-size: 13px; color: var(--ink); }
+  .alert-bar .text strong { font-weight: 700; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--ink); color: white;
+    padding: 12px 20px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    z-index: 9999;
+    transform: translateY(80px); opacity: 0;
+    transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── MOBILE DRAWER ── */
+  .drawer-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(26,26,46,.45);
+    backdrop-filter: blur(2px);
+    z-index: 200;
+    opacity: 0;
+    transition: opacity .25s;
+  }
+  .drawer-overlay.open { display: block; opacity: 1; }
+
+  .sidebar {
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* hamburger button — hidden on desktop */
+  .hamburger {
+    display: none;
+    width: 36px; height: 36px;
+    background: var(--mist); border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer;
+    align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+    transition: background .15s;
+  }
+  .hamburger:hover { background: var(--red-light); }
+
+  /* back button — hidden on desktop */
+  .back-btn {
+    display: none;
+    align-items: center; gap: 4px;
+    background: none; border: none;
+    cursor: pointer; font-family: 'DM Sans';
+    font-size: 14px; font-weight: 600;
+    color: var(--red); padding: 4px 6px;
+    border-radius: 6px; transition: background .15s;
+    flex-shrink: 0;
+  }
+  .back-btn:hover { background: var(--red-light); }
+
+  /* ── BOTTOM NAV (mobile only) ── */
+  .bottom-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 64px;
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 20px rgba(26,26,46,.08);
+    z-index: 150;
+    padding: 0 4px;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bottom-nav-inner {
+    display: flex; align-items: stretch;
+    height: 100%; justify-content: space-around;
+  }
+  .bnav-item {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px; flex: 1;
+    cursor: pointer; border: none; background: none;
+    font-family: 'DM Sans';
+    color: var(--slate); opacity: .55;
+    transition: opacity .15s, color .15s;
+    padding: 4px 2px;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bnav-item.active { color: var(--red); opacity: 1; }
+  .bnav-item .bnav-icon { font-size: 20px; line-height: 1; }
+  .bnav-item .bnav-label { font-size: 10px; font-weight: 600; letter-spacing: .03em; }
+  .bnav-item .bnav-dot {
+    position: absolute; top: 6px; right: calc(50% - 14px);
+    width: 7px; height: 7px;
+    background: var(--red); border-radius: 50%;
+    border: 2px solid var(--white);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:900px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .two-col { grid-template-columns: 1fr; }
+    .main { padding: 16px 14px 84px; /* bottom padding for bottom nav */ }
+
+    /* sidebar becomes a slide-in drawer */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 250;
+      transform: translateX(-100%);
+      box-shadow: var(--shadow-lg);
+      padding-top: 60px; /* clear topbar height */
+      width: 260px;
+    }
+    .sidebar.drawer-open { transform: translateX(0); }
+
+    /* show hamburger, hide user chip text on small screens */
+    .hamburger { display: flex; }
+    .back-btn { display: flex; }
+    .user-name, .user-role { display: none; }
+    .user-chip { padding: 4px; }
+
+    /* show bottom nav */
+    .bottom-nav { display: block; }
+
+    /* push toast above bottom nav */
+    .toast { bottom: 76px; right: 14px; left: 14px; text-align: center; }
+
+    /* hide topbar section label on mobile (shown in back-btn area) */
+    .topbar-section { display: none; }
+
+    /* tables on mobile: horizontal scroll */
+    .card { overflow-x: auto; }
+
+    /* calendar cells smaller */
+    .cal-day { min-height: 64px; padding: 5px; }
+    .cal-shift { font-size: 9px; }
+  }
+
+  @media(max-width:480px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .stat-value { font-size: 22px; }
+    .login-card { padding: 32px 22px; }
+    .page-title { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     SCREEN: LOGIN
+════════════════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="cross">✚</div>
+      <div>
+        <h1>TURNI<span style="color:var(--red)">+</span></h1>
+        <p>Croce Rossa Italiana — Sezione Locale</p>
+      </div>
+    </div>
+
+    <div class="role-pills">
+      <div class="role-pill active" data-role="volontario" onclick="setRole(this)">Volontario</div>
+      <div class="role-pill" data-role="capo_turno" onclick="setRole(this)">Capo Turno</div>
+      <div class="role-pill" data-role="admin" onclick="setRole(this)">Admin</div>
+    </div>
+
+    <div class="form-group">
+      <div class="login-label">Email</div>
+      <input class="login-input" type="email" id="login-email" value="mario.rossi@cri.it" placeholder="email@cri.it">
+    </div>
+    <div class="form-group">
+      <div class="login-label">Password</div>
+      <input class="login-input" type="password" id="login-pass" value="••••••••" placeholder="Password">
+    </div>
+    <button class="btn-login" onclick="doLogin()">Accedi →</button>
+    <p style="text-align:center;margin-top:16px;font-size:12px;color:rgba(255,255,255,.3);">Prototipo — nessun dato reale</p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SCREEN: APP (post-login)
+════════════════════════════════════════════ -->
+<div id="screen-app" class="screen">
+  <div class="app-shell">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <!-- hamburger: only visible on mobile -->
+      <button class="hamburger" id="hamburger-btn" onclick="toggleDrawer()" aria-label="Menu">☰</button>
+
+      <div class="topbar-logo">
+        <!-- back button: mobile only, shown when NOT on a primary page -->
+        <button class="back-btn" id="back-btn" onclick="goBack()">‹ Indietro</button>
+        <div class="topbar-cross" id="topbar-cross-logo">✚</div>
+        <span class="topbar-brand">TURNI<span style="color:var(--red)">+</span></span>
+        <span class="topbar-section" id="topbar-section">Dashboard</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="notif-btn" onclick="navTo('notifiche')">
+          🔔
+          <div class="notif-dot"></div>
+        </div>
+        <div class="user-chip" onclick="navTo('profilo')">
+          <div class="user-avatar" id="user-avatar">MR</div>
+          <div>
+            <div class="user-name" id="user-name">Mario Rossi</div>
+            <div class="user-role" id="user-role-label">Volontario</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-body">
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <div class="sidebar-section-label">Principale</div>
+        <div class="nav-item active" data-page="dashboard" onclick="navTo('dashboard')">
+          <span class="nav-icon">🏠</span> Dashboard
+        </div>
+        <div class="nav-item" data-page="calendario" onclick="navTo('calendario')">
+          <span class="nav-icon">📅</span> Calendario Turni
+        </div>
+        <div class="nav-item" data-page="miei-turni" onclick="navTo('miei-turni')">
+          <span class="nav-icon">✅</span> I Miei Turni
+          <span class="nav-badge" id="badge-miei">3</span>
+        </div>
+
+        <div class="sidebar-section-label" id="sidebar-admin-label" style="display:none">Amministrazione</div>
+        <div class="nav-item" id="nav-volontari" data-page="volontari" onclick="navTo('volontari')" style="display:none">
+          <span class="nav-icon">👥</span> Volontari
+        </div>
+        <div class="nav-item" id="nav-gestione" data-page="gestione-turni" onclick="navTo('gestione-turni')" style="display:none">
+          <span class="nav-icon">⚙️</span> Gestione Turni
+        </div>
+        <div class="nav-item" id="nav-report" data-page="report" onclick="navTo('report')" style="display:none">
+          <span class="nav-icon">📊</span> Report
+        </div>
+
+        <div class="sidebar-section-label">Account</div>
+        <div class="nav-item" data-page="notifiche" onclick="navTo('notifiche')">
+          <span class="nav-icon">🔔</span> Notifiche
+          <span class="nav-badge">2</span>
+        </div>
+        <div class="nav-item" data-page="profilo" onclick="navTo('profilo')">
+          <span class="nav-icon">👤</span> Profilo
+        </div>
+
+        <button class="logout-btn" onclick="doLogout()">
+          <span class="nav-icon">🚪</span> Esci
+        </button>
+      </div>
+
+      <!-- MAIN -->
+      <div class="main">
+
+        <!-- ── DASHBOARD ── -->
+        <div id="page-dashboard" class="page active">
+          <div class="page-header">
+            <div class="page-title" id="dash-title">Ciao, Mario 👋</div>
+            <div class="page-subtitle">Lunedì 18 Maggio 2026 • Sezione di Moncalieri</div>
+          </div>
+
+          <div class="alert-bar warn">
+            <span class="icon">⚠️</span>
+            <span class="text"><strong>2 turni scoperti</strong> questa settimana — vuoi renderti disponibile?</span>
+            <button class="btn-primary" style="margin-left:auto;padding:6px 14px;font-size:12px" onclick="navTo('calendario')">Vedi Calendario</button>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card accent">
+              <div class="stat-icon">📋</div>
+              <div class="stat-value" id="stat-prenotati">3</div>
+              <div class="stat-label">Turni Prenotati</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🚑</div>
+              <div class="stat-value">2</div>
+              <div class="stat-label">Turni Questo Mese</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">⚠️</div>
+              <div class="stat-value" id="stat-scoperti">2</div>
+              <div class="stat-label">Turni Scoperti</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📅</div>
+              <div class="stat-value">24 Mag</div>
+              <div class="stat-label">Prossimo Turno</div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Prossimi Turni</span>
+                <span class="badge badge-slate">Maggio 2026</span>
+              </div>
+              <table>
+                <thead><tr>
+                  <th>Data</th><th>Fascia</th><th>Servizio</th><th>Mezzo</th><th>Stato</th>
+                </tr></thead>
+                <tbody>
+                  <tr>
+                    <td><strong>24 Mag</strong></td>
+                    <td><span class="badge badge-green">Mattina</span></td>
+                    <td>Emergenza 118</td><td>MSA-01</td>
+                    <td><span class="badge badge-green">Confermato</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>28 Mag</strong></td>
+                    <td><span class="badge badge-amber">Pomeriggio</span></td>
+                    <td>Trasporto Ord.</td><td>MSB-02</td>
+                    <td><span class="badge badge-green">Confermato</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>31 Mag</strong></td>
+                    <td><span class="badge" style="background:#eeedf8;color:#5c58b0">Notte</span></td>
+                    <td>Emergenza 118</td><td>MSA-01</td>
+                    <td><span class="badge badge-amber">In attesa</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Copertura Settimanale</span>
+                <span class="badge badge-amber">Settimana 21</span>
+              </div>
+              <div class="card-body">
+                <div class="coverage-ring">
+                  <div class="ring-wrap">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                      <circle cx="40" cy="40" r="32" fill="none" stroke="var(--border)" stroke-width="8"/>
+                      <circle cx="40" cy="40" r="32" fill="none" stroke="var(--green)" stroke-width="8"
+                        stroke-dasharray="201" stroke-dashoffset="50" stroke-linecap="round"/>
+                    </svg>
+                    <div class="ring-label">
+                      <span class="ring-pct">75%</span>
+                      <span class="ring-sub">coperti</span>
+                    </div>
+                  </div>
+                  <div class="coverage-list">
+                    <div class="cov-row">
+                      <span class="cov-label">Mattina</span>
+                      <div class="cov-bar-wrap"><div class="cov-bar" style="width:90%;background:var(--green)"></div></div>
+                      <span class="cov-val">9/10</span>
+                    </div>
+                    <div class="cov-row">
+                      <span class="cov-label">Pomeriggio</span>
+                      <div class="cov-bar-wrap"><div class="cov-bar" style="width:70%;background:var(--amber)"></div></div>
+                      <span class="cov-val">7/10</span>
+                    </div>
+                    <div class="cov-row">
+                      <span class="cov-label">Notte</span>
+                      <div class="cov-bar-wrap"><div class="cov-bar" style="width:50%;background:var(--red)"></div></div>
+                      <span class="cov-val">5/10</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CALENDARIO ── -->
+        <div id="page-calendario" class="page">
+          <div class="page-header">
+            <div class="page-title">Calendario Turni</div>
+            <div class="page-subtitle">Clicca su un turno libero per prenotarti</div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="calendar-header" style="width:100%;margin-bottom:0">
+                <span class="card-title" id="cal-month-title">Maggio 2026</span>
+                <div class="cal-nav">
+                  <button class="cal-btn" onclick="prevMonth()">← Prec</button>
+                  <button class="cal-btn" onclick="nextMonth()">Succ →</button>
+                </div>
+              </div>
+            </div>
+            <div class="card-body" style="padding:16px">
+              <div class="calendar-grid" id="cal-grid">
+                <!-- JS generated -->
+              </div>
+            </div>
+          </div>
+
+          <!-- LEGENDA -->
+          <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap">
+            <span style="font-size:12px;display:flex;align-items:center;gap:6px"><span class="cal-shift mattina" style="display:inline-block;margin:0">M</span> Mattina — coperto</span>
+            <span style="font-size:12px;display:flex;align-items:center;gap:6px"><span class="cal-shift pomeriggio" style="display:inline-block;margin:0">P</span> Pomeriggio — coperto</span>
+            <span style="font-size:12px;display:flex;align-items:center;gap:6px"><span class="cal-shift notte" style="display:inline-block;margin:0">N</span> Notte — coperto</span>
+            <span style="font-size:12px;display:flex;align-items:center;gap:6px"><span class="cal-shift free" style="display:inline-block;margin:0">!</span> Turno scoperto</span>
+          </div>
+        </div>
+
+        <!-- ── I MIEI TURNI ── -->
+        <div id="page-miei-turni" class="page">
+          <div class="page-header">
+            <div class="page-title">I Miei Turni</div>
+            <div class="page-subtitle">I turni a cui ti sei registrato</div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Turni Prenotati</span>
+              <div class="shifts-filters" style="margin:0">
+                <button class="filter-btn active">Tutti</button>
+                <button class="filter-btn">Prossimi</button>
+                <button class="filter-btn">Passati</button>
+              </div>
+            </div>
+            <table>
+              <thead><tr>
+                <th>Data</th><th>Fascia Oraria</th><th>Servizio</th><th>Mezzo</th><th>Ruolo</th><th>Stato</th><th>Azione</th>
+              </tr></thead>
+              <tbody id="miei-turni-body">
+                <!-- JS generated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── VOLONTARI (admin/capo) ── -->
+        <div id="page-volontari" class="page">
+          <div class="page-header">
+            <div class="page-title">Gestione Volontari</div>
+            <div class="page-subtitle">Anagrafica e certificazioni</div>
+          </div>
+          <div style="display:flex;gap:10px;margin-bottom:20px">
+            <input class="form-control" style="max-width:280px" placeholder="🔍  Cerca volontario…">
+            <button class="btn-primary" onclick="navTo('nuovo-volontario')">+ Nuovo Volontario</button>
+          </div>
+          <div class="card">
+            <table>
+              <thead><tr>
+                <th>Nominativo</th><th>Email</th><th>Qualifica</th><th>Ruolo</th><th>Certif. scade</th><th>Stato</th>
+              </tr></thead>
+              <tbody>
+                <tr><td><strong>Mario Rossi</strong></td><td>mario.rossi@cri.it</td><td><span class="badge badge-slate">Soccorritore</span></td><td>Volontario</td><td><span class="badge badge-green">30/06/2026</span></td><td><span class="badge badge-green">Attivo</span></td></tr>
+                <tr><td><strong>Laura Bianchi</strong></td><td>l.bianchi@cri.it</td><td><span class="badge badge-slate">Autista</span></td><td>Capo Turno</td><td><span class="badge badge-amber">15/06/2026</span></td><td><span class="badge badge-green">Attivo</span></td></tr>
+                <tr><td><strong>Luca Ferrari</strong></td><td>l.ferrari@cri.it</td><td><span class="badge badge-slate">Barelliere</span></td><td>Volontario</td><td><span class="badge badge-red">02/05/2026</span></td><td><span class="badge badge-red">Certif. Scaduta</span></td></tr>
+                <tr><td><strong>Anna Conti</strong></td><td>a.conti@cri.it</td><td><span class="badge badge-slate">Soccorritore</span></td><td>Volontario</td><td><span class="badge badge-green">12/12/2026</span></td><td><span class="badge badge-green">Attivo</span></td></tr>
+                <tr><td><strong>Marco Neri</strong></td><td>m.neri@cri.it</td><td><span class="badge badge-slate">Autista</span></td><td>Admin</td><td><span class="badge badge-green">01/01/2027</span></td><td><span class="badge badge-green">Attivo</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── GESTIONE TURNI (admin) ── -->
+        <div id="page-gestione-turni" class="page">
+          <div class="page-header">
+            <div class="page-title">Gestione Turni</div>
+            <div class="page-subtitle">Crea e monitora i turni operativi</div>
+          </div>
+
+          <div class="two-col">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Crea Nuovo Turno</span></div>
+              <div class="card-body">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label class="form-label">Data</label>
+                    <input type="date" class="form-control" value="2026-05-25">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Fascia Oraria</label>
+                    <select class="form-control">
+                      <option>Mattina</option><option>Pomeriggio</option><option>Notte</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Tipo Servizio</label>
+                    <select class="form-control">
+                      <option>Emergenza 118</option>
+                      <option>Trasporto Ordinario</option>
+                      <option>Assistenza Eventi</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Posti Disponibili</label>
+                    <input type="number" class="form-control" value="3" min="1" max="10">
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button class="btn-primary" onclick="showToast('✅ Turno creato con successo!')">Crea Turno</button>
+                  <button class="btn-secondary">Annulla</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Turni Scoperti</span>
+                <span class="badge badge-red">2 urgenti</span>
+              </div>
+              <div class="card-body">
+                <div class="alert-bar danger">
+                  <span class="icon">🚨</span>
+                  <span class="text"><strong>22 Mag — Notte</strong> — 0/3 volontari iscritti</span>
+                  <button class="btn-primary" style="margin-left:auto;padding:5px 12px;font-size:12px" onclick="showToast('📧 Notifica inviata ai volontari disponibili!')">Notifica</button>
+                </div>
+                <div class="alert-bar warn">
+                  <span class="icon">⚠️</span>
+                  <span class="text"><strong>23 Mag — Pomeriggio</strong> — 1/3 volontari iscritti</span>
+                  <button class="btn-primary" style="margin-left:auto;padding:5px 12px;font-size:12px" onclick="showToast('📧 Notifica inviata ai volontari disponibili!')">Notifica</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">Tutti i Turni — Maggio 2026</span></div>
+            <table>
+              <thead><tr>
+                <th>Data</th><th>Fascia</th><th>Servizio</th><th>Copertura</th><th>Iscritti</th><th>Stato</th>
+              </tr></thead>
+              <tbody>
+                <tr><td>18 Mag</td><td><span class="badge badge-green">Mattina</span></td><td>Emergenza 118</td><td><div class="cov-bar-wrap" style="width:80px"><div class="cov-bar" style="width:100%;background:var(--green)"></div></div></td><td>3/3</td><td><span class="badge badge-green">Coperto</span></td></tr>
+                <tr><td>18 Mag</td><td><span class="badge badge-amber">Pomeriggio</span></td><td>Trasporto Ord.</td><td><div class="cov-bar-wrap" style="width:80px"><div class="cov-bar" style="width:67%;background:var(--amber)"></div></div></td><td>2/3</td><td><span class="badge badge-amber">Parziale</span></td></tr>
+                <tr><td>19 Mag</td><td><span class="badge" style="background:#eeedf8;color:#5c58b0">Notte</span></td><td>Emergenza 118</td><td><div class="cov-bar-wrap" style="width:80px"><div class="cov-bar" style="width:100%;background:var(--green)"></div></div></td><td>3/3</td><td><span class="badge badge-green">Coperto</span></td></tr>
+                <tr><td>22 Mag</td><td><span class="badge" style="background:#eeedf8;color:#5c58b0">Notte</span></td><td>Emergenza 118</td><td><div class="cov-bar-wrap" style="width:80px"><div class="cov-bar" style="width:0%;background:var(--red)"></div></div></td><td>0/3</td><td><span class="badge badge-red">Scoperto</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── NOTIFICHE ── -->
+        <div id="page-notifiche" class="page">
+          <div class="page-header">
+            <div class="page-title">Notifiche</div>
+            <div class="page-subtitle">Aggiornamenti e avvisi operativi</div>
+          </div>
+          <div class="card">
+            <div class="card-body">
+              <div class="notif-item">
+                <div class="notif-icon-wrap alert">🚨</div>
+                <div>
+                  <div class="notif-title">Turno scoperto — 22 Maggio, Notte</div>
+                  <div class="notif-body">Il turno di emergenza 118 del 22 Maggio (notte) non ha ancora volontari iscritti. Sei disponibile?</div>
+                  <div class="notif-time">Oggi, 08:15</div>
+                </div>
+                <button class="btn-primary" style="margin-left:auto;padding:7px 14px;font-size:13px;align-self:center;white-space:nowrap" onclick="showToast('✅ Ti sei iscritto al turno del 22 Maggio!')">Iscriviti</button>
+              </div>
+              <div class="notif-item">
+                <div class="notif-icon-wrap warn">⚠️</div>
+                <div>
+                  <div class="notif-title">Certificazione in scadenza</div>
+                  <div class="notif-body">La tua certificazione BLS scade il <strong>30 Giugno 2026</strong>. Ricordati di rinnovarla.</div>
+                  <div class="notif-time">Ieri, 16:42</div>
+                </div>
+              </div>
+              <div class="notif-item">
+                <div class="notif-icon-wrap ok">✅</div>
+                <div>
+                  <div class="notif-title">Prenotazione confermata</div>
+                  <div class="notif-body">La tua iscrizione al turno del <strong>24 Maggio (Mattina)</strong> è stata confermata.</div>
+                  <div class="notif-time">18 Mag, 09:00</div>
+                </div>
+              </div>
+              <div class="notif-item">
+                <div class="notif-icon-wrap ok">📋</div>
+                <div>
+                  <div class="notif-title">Nuovo turno disponibile</div>
+                  <div class="notif-body">È stato pubblicato il calendario turni per il mese di Giugno 2026.</div>
+                  <div class="notif-time">16 Mag, 14:20</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── PROFILO ── -->
+        <div id="page-profilo" class="page">
+          <div class="page-header">
+            <div class="page-title">Il Mio Profilo</div>
+            <div class="page-subtitle">Dati personali e certificazioni</div>
+          </div>
+          <div class="two-col">
+            <div class="card">
+              <div class="card-header"><span class="card-title">Dati Personali</span></div>
+              <div class="card-body">
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:22px">
+                  <div style="width:64px;height:64px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:white" id="profile-avatar-big">MR</div>
+                  <div>
+                    <div style="font-size:18px;font-weight:700" id="profile-name-big">Mario Rossi</div>
+                    <div style="font-size:13px;color:var(--slate)" id="profile-role-big">Volontario</div>
+                    <span class="badge badge-green" style="margin-top:4px">Attivo</span>
+                  </div>
+                </div>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label class="form-label">Nome</label>
+                    <input class="form-control" value="Mario" id="profile-nome">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Cognome</label>
+                    <input class="form-control" value="Rossi" id="profile-cognome">
+                  </div>
+                  <div class="form-group" style="grid-column:1/-1">
+                    <label class="form-label">Email</label>
+                    <input class="form-control" value="mario.rossi@cri.it">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Qualifica</label>
+                    <select class="form-control"><option selected>Soccorritore</option><option>Autista</option><option>Barelliere</option></select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Ruolo</label>
+                    <input class="form-control" value="Volontario" readonly style="opacity:.6">
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button class="btn-primary" onclick="showToast('✅ Profilo aggiornato!')">Salva Modifiche</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Certificazioni</span></div>
+              <div class="card-body">
+                <table>
+                  <thead><tr><th>Certificazione</th><th>Scadenza</th><th>Stato</th></tr></thead>
+                  <tbody>
+                    <tr><td>BLS-D</td><td>30/06/2026</td><td><span class="badge badge-amber">In scadenza</span></td></tr>
+                    <tr><td>Guida MSA</td><td>15/12/2026</td><td><span class="badge badge-green">Valida</span></td></tr>
+                    <tr><td>Primo Soccorso Base</td><td>01/01/2027</td><td><span class="badge badge-green">Valida</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── REPORT ── -->
+        <div id="page-report" class="page">
+          <div class="page-header">
+            <div class="page-title">Report Operativo</div>
+            <div class="page-subtitle">Statistiche e KPI della sezione</div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-icon">🚑</div><div class="stat-value">142</div><div class="stat-label">Turni Totali Maggio</div></div>
+            <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value">28</div><div class="stat-label">Volontari Attivi</div></div>
+            <div class="stat-card accent"><div class="stat-icon">📈</div><div class="stat-value">87%</div><div class="stat-label">Copertura Media</div></div>
+            <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-value">8</div><div class="stat-label">Turni Scoperti</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Copertura per Fascia — Ultimi 30 Giorni</span></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div class="cov-row" style="gap:14px">
+                  <span class="cov-label" style="width:90px;font-size:14px">Mattina</span>
+                  <div class="cov-bar-wrap" style="flex:1"><div class="cov-bar" style="width:92%;background:var(--green)"></div></div>
+                  <span class="cov-val" style="width:40px;font-size:14px">92%</span>
+                </div>
+                <div class="cov-row" style="gap:14px">
+                  <span class="cov-label" style="width:90px;font-size:14px">Pomeriggio</span>
+                  <div class="cov-bar-wrap" style="flex:1"><div class="cov-bar" style="width:85%;background:var(--amber)"></div></div>
+                  <span class="cov-val" style="width:40px;font-size:14px">85%</span>
+                </div>
+                <div class="cov-row" style="gap:14px">
+                  <span class="cov-label" style="width:90px;font-size:14px">Notte</span>
+                  <div class="cov-bar-wrap" style="flex:1"><div class="cov-bar" style="width:61%;background:var(--red)"></div></div>
+                  <span class="cov-val" style="width:40px;font-size:14px">61%</span>
+                </div>
+              </div>
+              <p style="font-size:12px;color:var(--slate);margin-top:16px;opacity:.6">⚡ I turni notturni richiedono attenzione: copertura sotto la soglia consigliata (80%)</p>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /main -->
+    </div><!-- /app-body -->
+  </div><!-- /app-shell -->
+
+  <!-- DRAWER OVERLAY (mobile) -->
+  <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+
+  <!-- BOTTOM NAV (mobile) -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <div class="bottom-nav-inner">
+      <button class="bnav-item active" data-bnav="dashboard" onclick="bnavTo('dashboard')">
+        <span class="bnav-icon">🏠</span>
+        <span class="bnav-label">Home</span>
+      </button>
+      <button class="bnav-item" data-bnav="calendario" onclick="bnavTo('calendario')">
+        <span class="bnav-icon">📅</span>
+        <span class="bnav-label">Calendario</span>
+      </button>
+      <button class="bnav-item" data-bnav="miei-turni" onclick="bnavTo('miei-turni')">
+        <span class="bnav-icon">✅</span>
+        <span class="bnav-label">I Miei</span>
+        <span class="bnav-dot"></span>
+      </button>
+      <button class="bnav-item" data-bnav="notifiche" onclick="bnavTo('notifiche')">
+        <span class="bnav-icon">🔔</span>
+        <span class="bnav-label">Notifiche</span>
+        <span class="bnav-dot"></span>
+      </button>
+      <button class="bnav-item" data-bnav="__menu" id="bnav-menu-btn" onclick="toggleDrawer()">
+        <span class="bnav-icon">⋯</span>
+        <span class="bnav-label">Altro</span>
+      </button>
+    </div>
+  </nav>
+
+</div><!-- /screen-app -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── STATE ──────────────────────────────────────────
+  let currentRole = 'volontario';
+  let currentPage = 'dashboard';
+  let navHistory  = [];          // navigation stack for back button
+  let calYear = 2026, calMonth = 4;
+
+  // Primary pages shown in bottom nav — stay in history root
+  const PRIMARY_PAGES = new Set(['dashboard','calendario','miei-turni','notifiche']);
+
+  const userProfiles = {
+    volontario: { name: 'Mario Rossi',   initials: 'MR', role: 'Volontario' },
+    capo_turno: { name: 'Laura Bianchi', initials: 'LB', role: 'Capo Turno' },
+    admin:      { name: 'Marco Neri',    initials: 'MN', role: 'Amministratore' },
+  };
+
+  const miei_turni_data = [
+    { data: '24 Mag', fascia: 'Mattina',     fclass: 'green', servizio: 'Emergenza 118',   mezzo: 'MSA-01', ruolo: 'Soccorritore', stato: 'Confermato', sclass: 'green' },
+    { data: '28 Mag', fascia: 'Pomeriggio',  fclass: 'amber', servizio: 'Trasporto Ord.',  mezzo: 'MSB-02', ruolo: 'Barelliere',   stato: 'Confermato', sclass: 'green' },
+    { data: '31 Mag', fascia: 'Notte',       fclass: 'notte', servizio: 'Emergenza 118',   mezzo: 'MSA-01', ruolo: 'Soccorritore', stato: 'In attesa',  sclass: 'amber' },
+  ];
+
+  const calData = {
+    '2026-5-18': [['M','mattina'],['P','pomeriggio'],['N','notte']],
+    '2026-5-19': [['M','mattina'],['P','pomeriggio']],
+    '2026-5-20': [['M','mattina'],['!','free'],['N','notte']],
+    '2026-5-21': [['M','mattina'],['P','pomeriggio'],['N','notte']],
+    '2026-5-22': [['M','mattina'],['P','pomeriggio'],['!','free']],
+    '2026-5-23': [['M','mattina'],['!','free'],['N','notte']],
+    '2026-5-24': [['M','mattina'],['P','pomeriggio'],['N','notte']],
+    '2026-5-25': [['M','mattina'],['P','pomeriggio']],
+    '2026-5-26': [['!','free'],['P','pomeriggio'],['N','notte']],
+    '2026-5-27': [['M','mattina'],['!','free'],['N','notte']],
+    '2026-5-28': [['M','mattina'],['P','pomeriggio'],['N','notte']],
+    '2026-5-29': [['M','mattina'],['P','pomeriggio'],['!','free']],
+    '2026-5-30': [['M','mattina'],['P','pomeriggio'],['N','notte']],
+  };
+
+  // ── LOGIN ──────────────────────────────────────────
+  function setRole(el) {
+    document.querySelectorAll('.role-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    currentRole = el.dataset.role;
+  }
+
+  function doLogin() {
+    const profile = userProfiles[currentRole];
+    document.getElementById('user-avatar').textContent        = profile.initials;
+    document.getElementById('user-name').textContent          = profile.name;
+    document.getElementById('user-role-label').textContent    = profile.role;
+    document.getElementById('profile-avatar-big').textContent = profile.initials;
+    document.getElementById('profile-name-big').textContent   = profile.name;
+    document.getElementById('profile-role-big').textContent   = profile.role;
+    document.getElementById('dash-title').textContent         = 'Ciao, ' + profile.name.split(' ')[0] + ' 👋';
+
+    const isAdmin = currentRole !== 'volontario';
+    ['sidebar-admin-label','nav-volontari','nav-gestione','nav-report'].forEach(id => {
+      document.getElementById(id).style.display = isAdmin ? '' : 'none';
+    });
+
+    document.getElementById('screen-login').classList.remove('active');
+    document.getElementById('screen-app').classList.add('active');
+
+    navHistory = [];
+    navTo('dashboard');
+    buildCalendar();
+    buildMieiTurni();
+  }
+
+  function doLogout() {
+    closeDrawer();
+    document.getElementById('screen-app').classList.remove('active');
+    document.getElementById('screen-login').classList.add('active');
+  }
+
+  // ── NAVIGATION ─────────────────────────────────────
+  const titles = {
+    dashboard: 'Dashboard', calendario: 'Calendario Turni', 'miei-turni': 'I Miei Turni',
+    volontari: 'Volontari', 'gestione-turni': 'Gestione Turni',
+    notifiche: 'Notifiche', profilo: 'Profilo', report: 'Report'
+  };
+
+  function navTo(page, pushHistory = true) {
+    // Push to history stack (skip if same page or if it's a back-navigation)
+    if (pushHistory && currentPage !== page) {
+      navHistory.push(currentPage);
+      if (navHistory.length > 20) navHistory.shift(); // cap history
+    }
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+    const el = document.getElementById('page-' + page);
+    if (el) el.classList.add('active');
+    const navEl = document.querySelector('[data-page="' + page + '"]');
+    if (navEl) navEl.classList.add('active');
+
+    currentPage = page;
+    document.getElementById('topbar-section').textContent = titles[page] || '';
+
+    // Update bottom nav active state
+    document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+    const bnavEl = document.querySelector('[data-bnav="' + page + '"]');
+    if (bnavEl) bnavEl.classList.add('active');
+
+    // Back button: show on mobile when there's history AND page isn't a primary page
+    updateBackBtn();
+
+    closeDrawer();
+  }
+
+  // Bottom nav shortcut — clears history when jumping to a primary tab
+  function bnavTo(page) {
+    navHistory = [];
+    navTo(page, false);
+  }
+
+  function goBack() {
+    if (navHistory.length > 0) {
+      const prev = navHistory.pop();
+      navTo(prev, false); // don't push again
+    }
+  }
+
+  function updateBackBtn() {
+    const backBtn  = document.getElementById('back-btn');
+    const crossLogo = document.getElementById('topbar-cross-logo');
+    const brand    = document.querySelector('.topbar-brand');
+    const isMobile = window.innerWidth <= 900;
+    const hasHistory = navHistory.length > 0;
+    const isSecondary = !PRIMARY_PAGES.has(currentPage);
+
+    if (isMobile && hasHistory) {
+      backBtn.style.display = 'flex';
+      // hide logo+brand on mobile when back is shown to save space
+      if (crossLogo) crossLogo.style.display = 'none';
+      if (brand) brand.style.display = 'none';
+    } else {
+      backBtn.style.display = 'none';
+      if (crossLogo) crossLogo.style.display = '';
+      if (brand) brand.style.display = '';
+    }
+  }
+
+  window.addEventListener('resize', updateBackBtn);
+
+  // ── DRAWER ─────────────────────────────────────────
+  function toggleDrawer() {
+    const sidebar  = document.querySelector('.sidebar');
+    const overlay  = document.getElementById('drawer-overlay');
+    const menuBtn  = document.getElementById('bnav-menu-btn');
+    const isOpen   = sidebar.classList.contains('drawer-open');
+    if (isOpen) {
+      closeDrawer();
+    } else {
+      sidebar.classList.add('drawer-open');
+      overlay.classList.add('open');
+      if (menuBtn) menuBtn.classList.add('active');
+    }
+  }
+
+  function closeDrawer() {
+    document.querySelector('.sidebar').classList.remove('drawer-open');
+    const overlay = document.getElementById('drawer-overlay');
+    if (overlay) overlay.classList.remove('open');
+    const menuBtn = document.getElementById('bnav-menu-btn');
+    if (menuBtn) menuBtn.classList.remove('active');
+  }
+
+  // Close drawer on Escape
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+  // ── CALENDAR ───────────────────────────────────────
+  const monthNames = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  const dayNames   = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+
+  function buildCalendar() {
+    const grid = document.getElementById('cal-grid');
+    document.getElementById('cal-month-title').textContent = monthNames[calMonth] + ' ' + calYear;
+    grid.innerHTML = '';
+
+    dayNames.forEach(d => {
+      const h = document.createElement('div');
+      h.className = 'cal-day-header'; h.textContent = d;
+      grid.appendChild(h);
+    });
+
+    const firstDay       = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth    = new Date(calYear, calMonth+1, 0).getDate();
+    const daysInPrevMonth = new Date(calYear, calMonth, 0).getDate();
+    const today          = new Date();
+
+    for (let i = firstDay-1; i >= 0; i--) {
+      const d = document.createElement('div');
+      d.className = 'cal-day other-month';
+      d.innerHTML = '<div class="cal-date">' + (daysInPrevMonth-i) + '</div>';
+      grid.appendChild(d);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = document.createElement('div');
+      const isToday = (today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===day);
+      d.className = 'cal-day' + (isToday ? ' today' : '');
+
+      const key    = calYear+'-'+(calMonth+1)+'-'+day;
+      const shifts = calData[key] || [];
+
+      let html = '<div class="cal-date">' + day + '</div>';
+      shifts.forEach(([label,cls]) => {
+        html += '<span class="cal-shift ' + cls + '">' + (
+          cls==='free'       ? '⚠ Scoperto'  :
+          cls==='mattina'    ? '🌅 Mattina'   :
+          cls==='pomeriggio' ? '☀ Pomerig.'   : '🌙 Notte') + '</span>';
+      });
+      d.innerHTML = html;
+
+      if (shifts.some(s => s[1]==='free')) {
+        d.addEventListener('click', () => {
+          showToast('📝 Seleziona il turno scoperto del ' + day + ' ' + monthNames[calMonth] + ' per iscriverti');
+        });
+      }
+      grid.appendChild(d);
+    }
+
+    const totalCells = firstDay + daysInMonth;
+    const remaining  = (7 - (totalCells % 7)) % 7;
+    for (let i = 1; i <= remaining; i++) {
+      const d = document.createElement('div');
+      d.className = 'cal-day other-month';
+      d.innerHTML = '<div class="cal-date">'+i+'</div>';
+      grid.appendChild(d);
+    }
+  }
+
+  function prevMonth() { if(calMonth===0){calMonth=11;calYear--;}else{calMonth--;} buildCalendar(); }
+  function nextMonth() { if(calMonth===11){calMonth=0;calYear++;}else{calMonth++;} buildCalendar(); }
+
+  // ── MIEI TURNI ─────────────────────────────────────
+  function buildMieiTurni() {
+    const body = document.getElementById('miei-turni-body');
+    const notte_bg = 'background:#eeedf8;color:#5c58b0';
+    body.innerHTML = miei_turni_data.map(t => `
+      <tr>
+        <td><strong>${t.data}</strong></td>
+        <td><span class="badge badge-${t.fclass}" ${t.fclass==='notte'?'style="'+notte_bg+'"':''}>${t.fascia}</span></td>
+        <td>${t.servizio}</td>
+        <td><code style="font-family:'DM Mono';font-size:12px">${t.mezzo}</code></td>
+        <td>${t.ruolo}</td>
+        <td><span class="badge badge-${t.sclass}">${t.stato}</span></td>
+        <td><button class="btn-secondary" style="padding:5px 12px;font-size:12px" onclick="showToast('❌ Prenotazione annullata per il ${t.data}')">Annulla</button></td>
+      </tr>
+    `).join('');
+  }
+
+  // ── TOAST ──────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      this.closest('.shifts-filters').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
